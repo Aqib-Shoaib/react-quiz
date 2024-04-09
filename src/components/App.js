@@ -6,6 +6,9 @@ import Main from "./Main";
 import StartScreen from "./StartScreen";
 import Question from "./Question";
 import NextButton from "./NextButton";
+import Progressbar from "./Progressbar";
+import FinishScreen from "./FinishScreen";
+import Timer from "./Timer";
 
 const initialState = {
   questions: [],
@@ -13,7 +16,10 @@ const initialState = {
   index: 0,
   answer: null,
   points: 0,
+  highscore: 0,
+  totalSeconds: null,
 };
+const SECS_PER_QUESTION = 20;
 function reducer(state, action) {
   switch (action.type) {
     case "dataRecieved":
@@ -31,6 +37,7 @@ function reducer(state, action) {
       return {
         ...state,
         status: "active",
+        totalSeconds: SECS_PER_QUESTION * state.questions.length,
       };
     case "newAnswer":
       const correct = state.questions.at(state.index).correctOption;
@@ -46,17 +53,36 @@ function reducer(state, action) {
         answer: null,
         index: state.index + 1,
       };
+    case "finish":
+      return {
+        ...state,
+        status: "finished",
+        highscore:
+          state.points > state.highscore ? state.points : state.highscore,
+      };
+    case "reset":
+      return {
+        ...initialState,
+        questions: state.questions,
+        status: "Ready",
+      };
+    case "tick":
+      return {
+        ...state,
+        totalSeconds: state.totalSeconds--,
+      };
     default:
       throw new Error("Action Unknown");
   }
 }
 
 export default function App() {
-  const [{ questions, status, index, answer, points }, dispatch] = useReducer(
-    reducer,
-    initialState
-  );
+  const [
+    { questions, status, index, answer, points, highscore, totalSeconds },
+    dispatch,
+  ] = useReducer(reducer, initialState);
   const numQuestions = questions.length;
+  const maxPoints = questions.reduce((prev, curr) => prev + curr.points, 0);
 
   useEffect(function () {
     fetch(`http://localhost:8000/questions`)
@@ -76,13 +102,35 @@ export default function App() {
         )}
         {status === "active" && (
           <>
+            <Progressbar
+              index={index}
+              numQuestions={numQuestions}
+              points={points}
+              maxPoints={maxPoints}
+              answer={answer}
+            />
+            <Timer totalSeconds={totalSeconds} dispatch={dispatch} />
             <Question
               question={questions.at(index)}
               dispatch={dispatch}
               answer={answer}
             />
-            <NextButton dispatch={dispatch} answer={answer} />
+
+            <NextButton
+              dispatch={dispatch}
+              answer={answer}
+              index={index}
+              numQuestions={numQuestions}
+            />
           </>
+        )}
+        {status === "finished" && (
+          <FinishScreen
+            points={points}
+            maxPoints={maxPoints}
+            highscore={highscore}
+            dispatch={dispatch}
+          />
         )}
       </Main>
     </div>
