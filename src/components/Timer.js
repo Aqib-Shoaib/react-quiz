@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 
 function Timer({ dispatch, totalSeconds }) {
-  const mins = Math.ceil(totalSeconds / 60);
-  const secs = totalSeconds % 60;
+  if (totalSeconds < 0) dispatch({ type: "finish" });
 
   useEffect(
     function () {
@@ -13,14 +12,18 @@ function Timer({ dispatch, totalSeconds }) {
     },
     [dispatch]
   );
+  if (totalSeconds > 0) {
+    const mins = Math.ceil(totalSeconds / 60);
+    const secs = totalSeconds % 60;
 
-  return (
-    <button className="btn">
-      {mins < 10 ? "0" : ""}
-      {mins}:{secs < 10 ? "0" : ""}
-      {secs}
-    </button>
-  );
+    return (
+      <button className="btn">
+        {mins < 10 ? "0" : ""}
+        {mins}:{secs < 10 ? "0" : ""}
+        {secs}
+      </button>
+    );
+  }
 }
 
 export default Timer;
