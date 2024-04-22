@@ -1,6 +1,8 @@
 import { useEffect } from "react";
+import { useQuiz } from "./QuizContext";
 
-function Timer({ dispatch, totalSeconds }) {
+function Timer() {
+  const { dispatch, totalSeconds } = useQuiz();
   if (totalSeconds < 0) dispatch({ type: "finish" });
 
   useEffect(
